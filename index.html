@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחולל סדר אקראי</title>
+    <style>
+        body, input, button {
+            font-family: "Arial", sans-serif;
+            font-size: 24px;
+            line-height: 1.4;
+        }
+        body {
+            margin: 2em;
+        }
+        ol {
+            border-top: 2px solid #c0c0c0;
+            padding: 0;
+            list-style-position: inside;
+            counter-reset: order;
+        }
+        ol li {
+            padding: .5em 0;
+            border-bottom: 2px solid #c0c0c0;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            counter-increment: order;
+
+        }
+        ol li::before {
+            content: counter(order);
+            margin-inline-end: 1em;
+            color: #c0c0c0;
+        }
+        input[type="text"] {
+            appearance: none;
+            border: none;
+            flex: 1;
+        }
+        .remove-item-button {
+            visibility: hidden;
+        }
+        ol li:hover .remove-item-button {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    
+    <ol id="the_order">
+    </ol>
+
+    <button type="button" id="add_item_button">הוספה</button>
+    <button type="button" id="randomize_button">סדר מחדש</button>
+
+    <template id="the_order_item">
+        <li>
+            <input type="text">
+            <button type="button" class="remove-item-button">הסרה</button>
+        </li>
+    </template>
+
+    <script type="text/javascript">
+        const theOrderElement = document.getElementById( "the_order" );
+        const theOrderItemTemplate = document.getElementById( "the_order_item" ).content.querySelector( "li" );
+        const theOrder = [];
+
+        function addItem( text = "" ) {
+            const el = theOrderItemTemplate.cloneNode( true );
+            el.querySelector( "input" ).value = typeof text === "string" ? text : "";
+            theOrderElement.append( el );
+        }
+        
+        function saveOrder() {
+            if ( !('localStorage' in window) ) return;
+            theOrder.splice( 0 );
+            for (let i = 0; i<theOrderElement.children.length;i++) {
+                theOrder.push( theOrderElement.children[ i ].querySelector( "input" ).value );
+            }
+            window.localStorage.theOrder = JSON.stringify( theOrder );
+        }
+
+        if ( 'localStorage' in window && 'theOrder' in window.localStorage ) {
+            const arr = JSON.parse( window.localStorage.theOrder );
+            if ( arr.length ) theOrder.push( ...arr );
+        }
+
+        theOrder.forEach( addItem );
+        document.getElementById( "add_item_button" ).addEventListener( "click", addItem );
+        document.getElementById( "randomize_button" ).addEventListener( "click", () => {
+            for (let i = theOrderElement.children.length; i >= 0; i--) {
+                theOrderElement.appendChild(theOrderElement.children[Math.random() * i | 0]);
+            }
+            saveOrder();
+        } );
+        window.addEventListener( "input", e => {
+            if ( 'Element' in window && e.target instanceof Element && 'tagName' in e.target && e.target.tagName.toLowerCase() === "input" ) {
+                saveOrder();
+            }
+        } );
+        window.addEventListener( "click", e => {
+            if ( 'Element' in window && e.target instanceof Element && 'className' in e.target && e.target.className === "remove-item-button") {
+                e.target.parentElement.remove();
+            }
+            saveOrder();
+        } );
+
+    </script>
+
+</body>
+</html>
